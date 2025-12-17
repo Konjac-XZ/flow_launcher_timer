@@ -93,14 +93,58 @@ function buildRules(): Rule[] {
   ];
 }
 
-function stripTitleArgs(args: string[]): { expr: string; ok: boolean } {
-  if (!args || args.length === 0) return { expr: '', ok: true };
+function stripTitleArgs(args: string[]): { expr: string; ok: boolean; hasTitleArg: boolean } {
+  if (!args || args.length === 0) return { expr: '', ok: true, hasTitleArg: false };
   const parts: string[] = [];
+  let hasTitleArg = false;
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--title') { i++; continue; }
+    if (args[i] === '--title') { i++; hasTitleArg = true; continue; }
     parts.push(args[i]);
   }
-  return { expr: parts.join(' ').trim(), ok: true };
+  return { expr: parts.join(' ').trim(), ok: true, hasTitleArg };
+}
+
+const DURATION_UNIT_TOKENS = new Set([
+  'y','yr','yrs','year','years',
+  'mo','month','months',
+  'w','wk','wks','week','weeks',
+  'd','day','days',
+  'h','hr','hrs','hour','hours',
+  'm','min','mins','minute','minutes',
+  's','sec','secs','second','seconds',
+]);
+
+function parseDurationOnly(expr: string): string | null {
+  const rules: Rule[] = [new ColonDurationRule(), new UnitDurationRule(), new PureNumberMinutesRule()];
+  for (const r of rules) {
+    if (r.matches(expr)) {
+      const norm = r.parse(expr);
+      if (norm) return norm;
+    }
+  }
+  return null;
+}
+
+function parseDurationWithTrailingNote(expr: string): { normalized: string; note: string } | null {
+  const parts = expr.trim().split(/\s+/);
+  if (parts.length < 2) return null;
+  const note = parts.pop()!;
+  // Avoid treating units or numeric tails as notes
+  const noteLower = note.toLowerCase();
+  if (!/[a-z]/i.test(note)) return null;
+  if (DURATION_UNIT_TOKENS.has(noteLower)) return null;
+  const disallowedNotes = new Set([
+    'am','pm','noon','midnight',
+    'jan','january','feb','february','mar','march','apr','april','may','jun','june','jul','july','aug','august','sep','sept','september','oct','october','nov','november','dec','december',
+    'sun','sunday','mon','monday','tue','tues','tuesday','wed','wednesday','thu','thur','thurs','thursday','fri','friday','sat','saturday',
+  ]);
+  if (disallowedNotes.has(noteLower)) return null;
+  const baseExpr = parts.join(' ');
+  // Do not treat colon/dot duration tokens (e.g., 5:30) as note-bearing to avoid overmatching
+  if (new ColonDurationRule().matches(baseExpr)) return null;
+  const normalized = parseDurationOnly(baseExpr);
+  if (!normalized) return null;
+  return { normalized, note };
 }
 
 export function validateArgs(args: string[]): HourglassValidatorResult {
@@ -112,9 +156,17 @@ export function validateArgs(args: string[]): HourglassValidatorResult {
     return { result: true, timeStrings: [] };
   }
 
-  const { expr } = stripTitleArgs(args);
+  const { expr, hasTitleArg } = stripTitleArgs(args);
   if (expr.length === 0) {
     return { result: true, timeStrings: [] };
+  }
+
+  // Allow a trailing note (single token) after a duration, unless a title flag was already used
+  if (!hasTitleArg) {
+    const durationWithNote = parseDurationWithTrailingNote(expr);
+    if (durationWithNote) {
+      return { result: true, timeStrings: [durationWithNote.normalized], note: durationWithNote.note };
+    }
   }
 
   const rules = buildRules();
@@ -124,6 +176,7 @@ export function validateArgs(args: string[]): HourglassValidatorResult {
       if (normalized) return { result: true, timeStrings: [normalized] };
     }
   }
+
   return { result: false, timeStrings: [] };
 }
 
