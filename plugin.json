@@ -4,7 +4,7 @@
     "Name": "Timer",
     "Description": "Set timers and alarms.",
     "Author": "Konjac-XZ",
-    "Version": "1.2.1",
+    "Version": "1.2.4",
     "Language": "JavaScript",
     "Website": "https://github.com/pivotiiii/flow_launcher_timer",
     "ExecuteFileName": "dist\\main.js",

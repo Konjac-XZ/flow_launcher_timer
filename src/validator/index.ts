@@ -2,7 +2,7 @@ import { HourglassValidatorResult, Rule } from './types.js';
 import { PureNumberMinutesRule, ColonDurationRule, UnitDurationRule } from './rules/duration.js';
 import { NumericDateRule, LongDateRule, CompactMonthDayRule } from './rules/date.js';
 import { DayOfWeekRule } from './rules/dow.js';
-import { NoonMidnightRule, TimeOfDayRule, UntilPrefixRule } from './rules/time.js';
+import { NoonMidnightRule, TimeOfDayRule, UntilPrefixRule, NextShortcutRule } from './rules/time.js';
 import { DayOfWeekRelativeRule, TomorrowRule } from './rules/relative.js';
 
 // Combined date + time parsing
@@ -75,6 +75,7 @@ function buildRules(): Rule[] {
   // Order matters: first matching rule is used
   return [
     // No-op/help cases handled by driver
+    new NextShortcutRule(),
     new UntilPrefixRule(),
     new NoonMidnightRule(),
     new CombinedDateTimeRule(),

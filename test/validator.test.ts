@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { validateArgs } from '../src/validator/index.js';
 
 describe('validateArgs (README examples)', () => {
@@ -112,6 +112,26 @@ describe('validateArgs (README examples)', () => {
       const mod = minutesOfDay(res.timeStrings[0]);
       expect(mod).toBe(expected);
     }
+  });
+
+  describe('next shortcut', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('"n" advances to the next 5-minute mark', () => {
+      vi.setSystemTime(new Date(2024, 0, 1, 15, 1, 0));
+      expect(validateArgs(['n'])).toEqual({ result: true, timeStrings: ['until 15:05'] });
+    });
+
+    it('"next" handles hour rollover', () => {
+      vi.setSystemTime(new Date(2024, 0, 1, 15, 55, 30));
+      expect(validateArgs(['next'])).toEqual({ result: true, timeStrings: ['until 16:00'] });
+    });
   });
 
   // Extended tests from README (official site examples)

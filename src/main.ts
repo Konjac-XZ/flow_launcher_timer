@@ -144,7 +144,8 @@ function parseQuery(query: string, settings: FlowLauncherSettings) {
             optionsArray.push("--show-time-elapsed");
             optionsArray.push(`${settings.elapsedTime === true ? "on" : "off"}`);
 
-            optionsArray.push(query);
+            const timerExpression = resolveTimerExpression(query, timeString);
+            optionsArray.push(timerExpression);
 
             logValidQuery(timeString, optionsArray, title);
         }
@@ -322,4 +323,15 @@ function getHourglassExePath(): string {
         // ignore and fall back to bundled
     }
     return hourglassExe;
+}
+
+function resolveTimerExpression(query: string, normalized: string | null): string {
+    if (normalized === null) {
+        return query;
+    }
+    const trimmed = query.trim().toLowerCase();
+    if (trimmed === "n" || trimmed === "next") {
+        return normalized;
+    }
+    return query;
 }

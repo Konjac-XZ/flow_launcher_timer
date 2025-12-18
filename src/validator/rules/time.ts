@@ -24,6 +24,17 @@ export class UntilPrefixRule implements Rule {
   }
 }
 
+export class NextShortcutRule implements Rule {
+  name = 'next-shortcut';
+  matches(input: string): boolean {
+    const s = input.trim().toLowerCase();
+    return s === 'n' || s === 'next';
+  }
+  parse(_input: string): string | null {
+    return `until ${nextFiveMinuteMark()}`;
+  }
+}
+
 export class TimeOfDayRule implements Rule {
   name = 'time-of-day';
   matches(input: string): boolean {
@@ -87,4 +98,13 @@ export function normalizeTimeOfDay(s: string): string | null {
   }
 
   return null;
+}
+
+function nextFiveMinuteMark(now: Date = new Date()): string {
+  const future = new Date(now);
+  future.setSeconds(0, 0);
+  const remainder = future.getMinutes() % 5;
+  const minutesToAdd = remainder === 0 ? 5 : 5 - remainder;
+  future.setMinutes(future.getMinutes() + minutesToAdd);
+  return `${pad2(future.getHours())}:${pad2(future.getMinutes())}`;
 }
