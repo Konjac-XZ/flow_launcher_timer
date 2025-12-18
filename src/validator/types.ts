@@ -1,6 +1,7 @@
 export interface HourglassValidatorResult {
   result: boolean;
   timeStrings: string[];
+  note?: string;
 }
 
 export interface Rule {

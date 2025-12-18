@@ -74,6 +74,26 @@ describe('validateArgs (README examples)', () => {
     expect(validateArgs(['--title', 'pizza', '5:30'])).toEqual({ result: true, timeStrings: ['5 minutes 30 seconds'] });
   });
 
+  it('duration + trailing word sets note (bare minutes or with units)', () => {
+    expect(validateArgs(['2 comment'])).toEqual({ result: true, timeStrings: ['2 minutes'], note: 'comment' });
+
+    const unitCases: Array<[string, string, string]> = [
+      ['2s comment', '2 seconds', 'comment'],
+      ['2 sec comment', '2 seconds', 'comment'],
+      ['2m comment', '2 minutes', 'comment'],
+      ['2 min comment', '2 minutes', 'comment'],
+      ['2h comment', '2 hours', 'comment'],
+      ['2 hour comment', '2 hours', 'comment'],
+      ['5m30s snack', '5 minutes 30 seconds', 'snack'],
+    ];
+    for (const [input, expected, note] of unitCases) {
+      const res = validateArgs([input]);
+      expect(res.result).toBe(true);
+      expect(res.timeStrings).toEqual([expected]);
+      expect(res.note).toBe(note);
+    }
+  });
+
   // Abbreviated 'u' and undelimited time inputs should normalize to the same moment
   function minutesOfDay(s: string): number | null {
     const str = s.trim().toLowerCase();

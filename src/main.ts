@@ -73,6 +73,13 @@ function parseQuery(query: string, settings: FlowLauncherSettings) {
         let isValidArgs: boolean = validatorResult.result;
         let timeString: string | null = validatorResult.timeStrings.length > 0 ? validatorResult.timeStrings[0] : null;
 
+        if (validatorResult.note) {
+            title = validatorResult.note;
+            const tokens = query.trim().split(/\s+/);
+            tokens.pop();
+            query = tokens.join(" ");
+        }
+
         // if the query is not valid, it may be because there is an added title in the query
         if (!isValidArgs) {
             if (splitQuery.length > 1) {
@@ -158,6 +165,7 @@ function parseQuery(query: string, settings: FlowLauncherSettings) {
 interface HourglassValidatorResult {
     result: boolean;
     timeStrings: string[];
+    note?: string;
 }
 
 function hourglassValidateArgs(args: string[]) {
